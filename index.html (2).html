@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validação - Supervisor de Campo</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: var(--primary);
+        }
+        .search-container {
+            max-width: 600px;
+            margin: 0 auto 30px auto;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus {
+            border-color: var(--accent);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .card {
+            background: var(--card-bg);
+            padding: 30px 20px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+        .emoji {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .btn-back {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        .btn-back:hover {
+            background-color: #1a252f;
+        }
+        #stateContainer {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .state-link {
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+        .state-link:hover {
+            background: var(--accent);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Conselhos Profissionais - Validação</h1>
+        <p>Selecione o curso e em seguida o conselho do estado desejado para validação.</p>
+    </header>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Pesquisar curso ou estado...">
+    </div>
+
+    <main>
+        <div id="courseContainer" class="grid"></div>
+
+        <div id="stateContainer" class="hidden">
+            <button class="btn-back" id="backBtn">⬅ Voltar aos Cursos</button>
+            <h2 id="selectedCourseTitle" style="text-align: center; margin-bottom: 20px;"></h2>
+            <div id="stateGrid" class="grid"></div>
+        </div>
+    </main>
+
+    <script>
+        const bd_conselhos = {"FARMÁCIA": {"GERAL": "https://site.cff.org.br/", "CRF AC": "https://crfac-sagicon.cisantec.com.br/crf-em-casa/consulta/cadastro/profissional.jsf", "CRF AL": "https://crfal-emcasa.cisantec.com.br/crf-em-casa/consulta/opcoes-validacao.jsf", "CRF AM": "https://sisprog.net.br/tsd/tsd-associado/tsd-associado-pesquisa", "CRF AP": "https://crfap-crf-em-casa.cisantec.com.br/crf-em-casa/consulta/cadastro/profissional.jsf", "CRF BA": "https://atendimentoeletronico.crf-ba.org.br/Default.aspx?ReturnUrl=%2f", "CRF CE": "https://crfce-emcasa.cisantec.com.br/crf-em-casa/consulta/cadastro/profissional.jsf", "CRF DF": "https://www.crfdf.org.br/site/servicos/consulta-profissionais", "CRF ES": "https://crfes-emcasa.cisantec.com.br/crf-em-casa/consulta/cadastro/profissional.jsf", "CRF GO": "https://crfgo-emcasa.cisantec.com.br/crf-em-casa/consulta/cadastro/profissional.jsf", "CRF MA": "https://crfma-emcasa.cisantec.com.br/crf-em-casa/consulta/cadastro/profissional.jsf", "CRF MG": "Site - CRF/MG", "CRF MS": "https://crfms-emcasa.cisantec.com.br/crf-em-casa/consulta/cadastro/profissional.jsf", "CRF MT": "https://www.farmasis.com.br/consultaspublicas/consultaprofissional.php?uf=MT", "CRF PA": "https://crfpa-emcasa.cisantec.com.br/crf-em-casa/consulta/cadastro/profissional.jsf", "CRF PB": "https://crfpb-emcasa.cisantec.com.br/crf-em-casa/consulta/cadastro/profissional.jsf", "CRF PE": "https://crfpe-crf-em-casa.cisantec.com.br/crf-em-casa/consulta/cadastro/profissional.jsf", "CRF PI": "https://crfpi-emcasa.cisantec.com.br/crf-em-casa/consulta/opcoes-validacao.jsf", "CRF PR": "https://crfemcasa.crf-pr.org.br/crf-em-casa/consulta/cadastro/profissional.jsf", "CRF RJ": "CONSELHO REGIONAL DE FARMÁCIA DO RIO DE JANEIRO", "CRF RN": "https://crfrn-emcasa.cisantec.com.br/crf-em-casa/consulta/cadastro/profissional.jsf", "CRF RO": "LINK DE CONSULTA NÃO LOCALIZADO", "CRF RR": "https://sisprog.net.br:20443/tsd/tsd-associado/tsd-associado-pesquisa", "CRF RS": "https://www.crfrs.org.br/profissionais/profissionais-ativos", "CRF SC": "https://crfsc-emcasa.cisantec.com.br/crf-em-casa/consulta/cadastro/profissional.jsf", "CRF SE": "https://crfse-emcasa.cisantec.com.br/crf-em-casa/consulta/cadastro/profissional.jsf", "CRF SP": "https://portal.crfsp.org.br/consulta-de-inscritos.html", "CRF TO": "https://crfto-emcasa.cisantec.com.br/crf-em-casa/consulta/opcoes-validacao.jsf"}, "ENFERMAGEM": {"GERAL": "https://sigen.cofen.gov.br/profissional/consultar", "COREN AC": "https://sigen.cofen.gov.br/profissional/consultar", "COREN AL": "https://sigen.cofen.gov.br/profissional/consultar", "COREN AM": "https://sigen.cofen.gov.br/profissional/consultar", "COREN AP": "https://sigen.cofen.gov.br/profissional/consultar", "COREN BA": "https://sigen.cofen.gov.br/profissional/consultar", "COREN CE": "https://sigen.cofen.gov.br/profissional/consultar", "COREN DF": "https://sigen.cofen.gov.br/profissional/consultar", "COREN ES": "https://servicos-es.coren-sp.gov.br/consulta-de-profissionais/", "COREN GO": "https://sigen.cofen.gov.br/profissional/consultar", "COREN MA": "https://www.incorpnet.com.br/appincorpnet2_corenma/incorpnet.dll/controller?pagina=pub_mvcLocalizarCadastro.htm", "COREN MG": "https://www.corenmg.gov.br/inscricao/consulta-inscricao/", "COREN MS": "https://servicos-ms.coren-sp.gov.br/consulta-de-profissionais/", "COREN MT": "https://www.incorpnet.com.br/appincorpnet2_corenmt/incorpnet.dll/controller?pagina=pub_mvcLocalizarCadastro.htm", "COREN PA": "https://www.incorpnet.com.br/appincorpnet2_corenpa/incorpnet.dll/controller?pagina=pub_mvcLocalizarCadastro.htm", "COREN PB": "https://sigen.cofen.gov.br/profissional/consultar", "COREN PE": "https://sigen.cofen.gov.br/profissional/consultar", "COREN PI": "https://sigen.cofen.gov.br/profissional/consultar", "COREN PR": "https://sig1.corenpr.gov.br/pgs/ConsultaMembroConselho.aspx", "COREN RJ": "https://sigen.cofen.gov.br/profissional/consultar", "COREN RN": "https://sigen.cofen.gov.br/profissional/consultar", "COREN RO": "https://www.coren-ro.org.br/confira-a-lista-de-profissionais-ativos-no-coren-ro/", "COREN RR": "https://sigen.cofen.gov.br/profissional/consultar", "COREN RS": "https://facil-rs.coren-sp.gov.br/publico/consulta/profissional/pesquisar", "COREN SC": "https://servicos-sc.coren-sp.gov.br/consulta-de-profissionais/", "COREN SE": "https://sigen.cofen.gov.br/profissional/consultar", "COREN SP": "https://servicos.coren-sp.gov.br/consulta-de-profissionais/", "COREN TO": "https://sigen.cofen.gov.br/profissional/consultar"}, "FISIOTERAPIA": {"CREFITO AC": "https://crefito-12.implanta.net.br/ServicosOnline/Publico/ConsultaInscritos/", "CREFITO AL": "https://crefito-01.implanta.net.br/ServicosOnline/Publico/ConsultaInscritos/", "CREFITO AM": "https://crefito-12.implanta.net.br/ServicosOnline/Publico/ConsultaInscritos/", "CREFITO AP": "https://crefito-12.implanta.net.br/ServicosOnline/Publico/ConsultaInscritos/", "CREFITO BA": "https://portal-servicos.crefito7.gov.br/#/consulta/profissional/busca", "CREFITO CE": "https://www.incorpnet.com.br/appincorpnet2_crefitoce/incorpnet.dll/controller?pagina=pub_mvcLocalizarCadastro.htm", "CREFITO DF": "https://crefito-11.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CREFITO ES": "https://crefito-15.implanta.net.br/ServicosOnline/Publico/ConsultaInscritos/", "CREFITO GO": "https://crefito-11.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CREFITO MA": "SERVIÇOS ONLINE.NET", "CREFITO MG": "https://crefito-04.implanta.net.br/servicosonline/Publico/ConsultaInscritos/", "CREFITO MS": "https://crefito-13.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CREFITO MT": "https://app-sicofito.coffito.gov.br/consulta-publica-profissional/consultar", "CREFITO PA": "https://crefito-12.implanta.net.br/ServicosOnline/Publico/ConsultaInscritos/", "CREFITO PB": "https://crefito-01.implanta.net.br/ServicosOnline/Publico/ConsultaInscritos/", "CREFITO PE": "https://crefito-01.implanta.net.br/ServicosOnline/Publico/ConsultaInscritos/", "CREFITO PI": "https://crefito-14.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CREFITO PR": "SERVIÇOS ONLINE.NET", "CREFITO RJ": "https://www.crefito2.com.br/spw/consultacadastral/TelaConsultaPublicaCompleta.aspx", "CREFITO RN": "https://crefito-01.implanta.net.br/ServicosOnline/Publico/ConsultaInscritos/", "CREFITO RO": "https://crefito-12.implanta.net.br/ServicosOnline/Publico/ConsultaInscritos/", "CREFITO RR": "https://crefito-12.implanta.net.br/ServicosOnline/Publico/ConsultaInscritos/", "CREFITO RS": "https://crefito-05.implanta.net.br/servicosonline/Publico/ConsultaInscritos/", "CREFITO SC": "https://www.incorpnet.com.br/appincorpnet2_crefitosc/incorpnet.dll/controller?pagina=pub_mvcLocalizarCadastro.htm", "CREFITO SE": "COFFITO | Consulta de Especialista Profissional", "CREFITO SP": "https://www.crefito3.org.br/dsn/consultapf/buscas.html", "CREFITO TO": "https://crefito-12.implanta.net.br/ServicosOnline/Publico/ConsultaInscritos/"}, "BIOMEDICINA": {"GERAL": "https://cfbm-br.implanta.net.br/visaonacional/publico/consulta-publica/index"}, "NUTRIÇÃO": {"GERAL": "https://cnn.cfn.org.br/application/index/consulta-nacional"}, "SERVIÇO SOCIAL": {"GERAL": "https://cfess-br.implanta.net.br/visaonacional/publico/consulta-publica/index", "CRESS AC": "https://cress-ac.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS AL": "https://cress-al.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS AM": "https://cress-am.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS AP": "https://cress-ap.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS BA": "https://cress-ba.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS CE": "https://cress-ce.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS DF": "https://cress-df.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS ES": "https://cress-es.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS GO": "https://cress-go.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS MA": "https://cress-ma.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS MG": "https://cress-mg.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS MS": "https://cress-ms.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS MT": "https://cress-mt.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS PA": "https://cress-pa.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS PB": "https://cress-pb.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS PE": "https://cress-pe.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS PI": "https://cress-pi.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS PR": "https://cress-pr.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS RJ": "https://cress-rj.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS RN": "https://cress-rn.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS RO": "https://cress-ro.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS RR": "https://cress-rr.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS RS": "https://cress-rs.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS SC": "https://cress-sc.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS SE": "https://cress-se.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS SP": "https://cress-sp.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/", "CRESS TO": "https://cress-to.implanta.net.br/servicosOnline/Publico/ConsultaInscritos/"}, "RADIOLOGIA": {"GERAL": "https://conter.gov.br/consultageral/", "CONTER AC": "Scire ::..", "CONTER AL": "https://www.studiosti.com.br/STI-Financeiro/Radiologia/CRTR8/Telas/Cadastro/Profissional_Empresa_Listar_TL.aspx", "CONTER AM": "https://www.servidorconter.com/servicos/consulta_cadastral.asp?codigo_cliente=19", "CONTER AP": "https://www.studiosti.com.br/STI-Financeiro/Radiologia/CRTR14/Telas/Cadastro/Profissional_Empresa_Listar_TL.aspx", "CONTER BA": "https://www.studiosti.com.br/STI-Financeiro/Radiologia/CRTR8/Telas/Cadastro/Profissional_Empresa_Listar_TL.aspx", "CONTER CE": "https://www.studiosti.com.br/STI-Financeiro/Radiologia/CRTR2/Telas/Cadastro/Profissional_Empresa_Listar_TL.aspx", "CONTER DF": "https://www.studiosti.com.br/STI-Financeiro/Radiologia/CRTR1/Telas/Cadastro/Profissional_Empresa_Listar_TL.aspx", "CONTER ES": "https://www.studiosti.com.br/STI-Financeiro/Radiologia/CRTR13/Telas/Cadastro/Profissional_Empresa_Listar_TL.aspx", "CONTER GO": "Scire ::..", "CONTER MA": "https://www.studiosti.com.br/STI-Financeiro/Radiologia/CRTR17/Telas/Cadastro/Profissional_Empresa_Listar_TL.aspx", "CONTER MG": "SERVIÇOS ONLINE.NET", "CONTER MS": "https://crtr12.com.br/site/", "CONTER MT": "https://crtr12.com.br/site/", "CONTER PA": "https://www.studiosti.com.br/STI-Financeiro/Radiologia/CRTR14/Telas/Cadastro/Profissional_Empresa_Listar_TL.aspx", "CONTER PB": "https://www.studiosti.com.br/STI-Financeiro/Radiologia/CRTR16/Telas/Cadastro/Profissional_Empresa_Listar_TL.aspx", "CONTER PE": "https://www.studiosti.com.br/STI-Financeiro/Radiologia/CRTR15/Telas/Cadastro/Profissional_Empresa_Listar_TL.aspx", "CONTER PI": "https://www.studiosti.com.br/STI-Financeiro/Radiologia/CRTR17/Telas/Cadastro/Profissional_Empresa_Listar_TL.aspx", "CONTER PR": "https://www.studiosti.com.br/STI-Financeiro/Radiologia/CRTR10/Telas/Cadastro/Profissional_Empresa_Listar_TL.aspx", "CONTER RJ": "https://www.servidorconter.com/servicos/consulta_cadastral.asp?codigo_cliente=4", "CONTER RN": "https://www.studiosti.com.br/STI-Financeiro/Radiologia/CRTR16/Telas/Cadastro/Profissional_Empresa_Listar_TL.aspx", "CONTER RO": "Scire ::..", "CONTER RR": "https://www.servidorconter.com/servicos/consulta_cadastral.asp?codigo_cliente=19", "CONTER RS": "https://www.studiosti.com.br/STI-Financeiro/Radiologia/CRTR6/Telas/Cadastro/Profissional_Empresa_Listar_TL.aspx", "CONTER SC": "https://www.studiosti.com.br/STI-Financeiro/Radiologia/CRTR11/Telas/Cadastro/Profissional_Empresa_Listar_TL.aspx", "CONTER SE": "https://www.studiosti.com.br/STI-Financeiro/Radiologia/CRTR8/Telas/Cadastro/Profissional_Empresa_Listar_TL.aspx", "CONTER SP": "http://201.87.123.25:8080/siscafweb/configPortalServico.do?portal=1&sigla=crtrsp&cache=1531224930471", "CONTER TO": "Scire ::.."}, "OUTROS LINKS": {"GERAL": "https://www3.cfc.org.br/SPW/ConsultaNacionalCFC/cfc"}, "QUIMICA": {"CRQ AC": "BR.Conselhos - Consulta de Membro do Conselho", "CRQ AL": "Externo - Consulta pública - Nova", "CRQ AM": "BR.Conselhos - Consulta de Membro do Conselho", "CRQ AP": "BR.Conselhos - Consulta de Membro do Conselho", "CRQ BA": "SERVIÇOS ONLINE.NET", "CRQ CE": "BR.Conselhos - Consulta de Membro do Conselho", "CRQ DF": "Conselho Regional de Química 12 Região", "CRQ ES": "Externo - Consulta pública - Nova", "CRQ GO": "Conselho Regional de Química 12 Região", "CRQ MA": "IncorpNET", "CRQ MG": "Portal Transparência CRQ-MG 2ª R", "CRQ MS": "Externo - Consulta pública - Site", "CRQ MT": "SERVIÇOS ONLINE.NET", "CRQ PA": "BR.Conselhos - Consulta de Membro do Conselho", "CRQ PB": "BR.Conselhos - Consulta de Membro do Conselho", "CRQ PE": "IncorpNET", "CRQ PI": "SERVIÇOS ONLINE.NET", "CRQ PR": "BR.Conselhos - Consulta de Membro do Conselho", "CRQ RJ": "ConselhosNet", "CRQ RN": "Virtualização", "CRQ RO": "BR.Conselhos - Consulta de Membro do Conselho", "CRQ RR": "BR.Conselhos - Consulta de Membro do Conselho", "CRQ RS": "Virtualização", "CRQ SC": "BR.Conselhos - Consulta de Membro do Conselho", "CRQ SE": "SERVIÇOS ONLINE.NET", "CRQ SP": "Consulta de Registros - CRQ", "CRQ TO": "Conselho Regional de Química 12 Região"}};
+
+        const emojis = {
+            "FARMÁCIA": "💊",
+            "ENFERMAGEM": "🩺",
+            "FISIOTERAPIA": "💆",
+            "BIOMEDICINA": "🧬",
+            "NUTRIÇÃO": "🍎",
+            "SERVIÇO SOCIAL": "🤝",
+            "RADIOLOGIA": "☢️",
+            "QUIMICA": "⚗️",
+            "OUTROS LINKS": "🔗"
+        };
+
+        const courseContainer = document.getElementById('courseContainer');
+        const stateContainer = document.getElementById('stateContainer');
+        const stateGrid = document.getElementById('stateGrid');
+        const searchInput = document.getElementById('searchInput');
+        const backBtn = document.getElementById('backBtn');
+        const selectedCourseTitle = document.getElementById('selectedCourseTitle');
+        
+        let currentView = 'courses';
+        let currentCourse = '';
+
+        function renderCourses(filter = "") {
+            courseContainer.innerHTML = '';
+            const courses = Object.keys(bd_conselhos);
+            
+            courses.forEach(course => {
+                if(course.toLowerCase().includes(filter.toLowerCase())) {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <div class="emoji">${emojis[course] || "🎓"}</div>
+                        <div class="card-title">${course}</div>
+                    `;
+                    card.onclick = () => openCourse(course);
+                    courseContainer.appendChild(card);
+                }
+            });
+        }
+
+        function renderStates(course, filter = "") {
+            stateGrid.innerHTML = '';
+            const states = bd_conselhos[course];
+            
+            Object.keys(states).forEach(state => {
+                if(state.toLowerCase().includes(filter.toLowerCase())) {
+                    let link = states[state];
+                    const card = document.createElement('a');
+                    card.className = 'card state-link';
+                    
+                    if(link.startsWith('http')) {
+                        card.href = link;
+                        card.target = '_blank';
+                    } else {
+                        // Trata links ausentes ou que constam apenas como texto na planilha
+                        card.onclick = () => alert("Informação contida na base: " + link);
+                    }
+                    
+                    card.innerHTML = `
+                        <div class="emoji">📍</div>
+                        <div class="card-title">${state}</div>
+                    `;
+                    stateGrid.appendChild(card);
+                }
+            });
+        }
+
+        function openCourse(course) {
+            currentView = 'states';
+            currentCourse = course;
+            searchInput.value = '';
+            searchInput.placeholder = `Pesquisar estado em ${course}...`;
+            
+            courseContainer.classList.add('hidden');
+            stateContainer.classList.remove('hidden');
+            selectedCourseTitle.textContent = `${emojis[course] || ""} Conselhos de ${course}`;
+            
+            renderStates(course);
+        }
+
+        backBtn.onclick = () => {
+            currentView = 'courses';
+            currentCourse = '';
+            searchInput.value = '';
+            searchInput.placeholder = 'Pesquisar curso ou estado...';
+            
+            stateContainer.classList.add('hidden');
+            courseContainer.classList.remove('hidden');
+            renderCourses();
+        };
+
+        searchInput.addEventListener('input', (e) => {
+            const val = e.target.value;
+            if(currentView === 'courses') {
+                renderCourses(val);
+            } else {
+                renderStates(currentCourse, val);
+            }
+        });
+
+        // Inicia a aplicação
+        renderCourses();
+    </script>
+</body>
+</html>
